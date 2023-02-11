@@ -1,0 +1,137 @@
+<div id="app"></div>
+
+<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.149.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.149.0/examples/jsm/",
+      "three/src/":"https://unpkg.com/three@0.149.0/src/"
+    }
+  }
+</script>
+
+<script type="module">
+
+        import * as THREE from 'three';
+		import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+		import {TextureLoader} from 'three/src/loaders/TextureLoader.js';
+
+			let container;
+
+			let camera, scene, renderer;
+			var controls
+			
+			let sleep = ms => {  return new Promise(resolve => setTimeout(resolve, ms));  };  
+		
+			
+			init();
+			animate();
+			function init() {
+				container =document.querySelector( '#app' );
+				var w = window.innerWidth;
+				var h = window.innerHeight;
+				
+				var viewSize = 100;
+				
+				camera = new THREE.OrthographicCamera( w / - 2 * viewSize, w / 2 * viewSize, h / 2 * viewSize, h / - 2 * viewSize, 0.1, 10000 );
+				
+			
+				camera.position.z = 100;
+				camera.zoom = 700;
+				camera.updateProjectionMatrix();
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color('#000000');
+				
+				// Ground
+				const hemiLight = new THREE.HemisphereLight(0x444444,0xD7D7D7 );
+				scene.add( hemiLight);
+
+				//light
+				 var ambientLight = new THREE.AmbientLight( "#0d0d0d");
+  				 scene.add( ambientLight );
+	
+                   const centerpoint = new THREE.Group();
+				const group = new THREE.Group();
+				let center = new THREE.Vector3();
+
+				const orangetexture = new THREE.TextureLoader().load('./industry-main/orange.jpg');
+				const graytexture = new THREE.TextureLoader().load('./industry-main/gray.jpg');
+
+				
+			const stlloader = new STLLoader();
+		
+            const stlmaterial = new THREE.MeshPhongMaterial({  map: graytexture,  transparent: true, specular: 0x737373, shininess: 100,side: THREE.DoubleSide });
+			const basemat = new THREE.MeshPhongMaterial({ map: orangetexture, transparent: true, specular: 0x737373, shininess: 100,side: THREE.DoubleSide});
+				stlloader.load("./industry-main/Jawbone.stl", function (geometry) {
+				geometry.computeBoundingBox();
+				geometry.boundingBox.getCenter(center);
+				geometry.center(); 
+                const mesh = new THREE.Mesh(geometry, stlmaterial);
+			
+               
+                renderer.render(scene, camera);
+				centerpoint.add( mesh );
+				} );
+				centerpoint.add( group);
+				stlloader.load( "./industry-main/Base.stl", function ( geometry ) {
+				const mesh = new THREE.Mesh( geometry, basemat );
+				group.add( mesh );
+                renderer.render(scene, camera);
+				} );
+				// renderer
+
+				renderer = new THREE.WebGLRenderer({ antialias: true });
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setClearColor(new THREE.Color(0x333333));
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.localClippingEnabled = true;
+				container.appendChild( renderer.domElement );
+				controls = new OrbitControls( camera, renderer.domElement );
+				sleep(4000).then(() => { 
+				group.position.x = group.position.x - center.x;
+				group.position.y = group.position.y - center.y;
+				group.position.z = group.position.z - center.z;
+				centerpoint.rotateX( -Math.PI / 2 );
+				centerpoint.scale.set(1,1,1)
+				scene.add( centerpoint );
+				
+				
+});  
+				window.addEventListener( 'resize', onWindowResize );
+				
+			}
+
+			
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				controls.update();
+				render();
+	
+
+			}
+
+			function render() {
+
+
+
+				renderer.render( scene, camera );
+
+			}
+
+	</script>
+
+
